@@ -23,93 +23,56 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import android.os.Parcel;
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
 
+import com.google.auto.value.AutoValue;
+import com.ryanharter.auto.value.parcel.ParcelAdapter;
+import org.sufficientlysecure.keychain.util.ByteMapParcelAdapter;
 import org.sufficientlysecure.keychain.util.ParcelableProxy;
 import org.sufficientlysecure.keychain.util.Passphrase;
 
 /**
  * This is a base class for the input of crypto operations.
  */
-public class CryptoInputParcel implements Parcelable {
+@AutoValue
+public abstract class CryptoInputParcel implements Parcelable {
 
-    private Date mSignatureTime;
-    private boolean mHasSignature;
-
-    public Passphrase mPassphrase;
-    // used to supply an explicit proxy to operations that require it
-    // this is not final so it can be added to an existing CryptoInputParcel
-    // (e.g) CertifyOperation with upload might require both passphrase and orbot to be enabled
-    private ParcelableProxy mParcelableProxy;
-
-    // specifies whether passphrases should be cached
-    public boolean mCachePassphrase = true;
-
-    // this map contains both decrypted session keys and signed hashes to be
-    // used in the crypto operation described by this parcel.
-    private HashMap<ByteBuffer, byte[]> mCryptoData = new HashMap<>();
-
-    public CryptoInputParcel() {
-        mSignatureTime = null;
-        mPassphrase = null;
-        mCachePassphrase = true;
+    public static CryptoInputParcel createCryptoInputParcel() {
+        return new AutoValue_CryptoInputParcel(null, new HashMap<ByteBuffer,byte[]>(), null, null, true);
     }
 
-    public CryptoInputParcel(Date signatureTime, Passphrase passphrase) {
-        mHasSignature = true;
-        mSignatureTime = signatureTime == null ? new Date() : signatureTime;
-        mPassphrase = passphrase;
-        mCachePassphrase = true;
-    }
-
-    public CryptoInputParcel(Passphrase passphrase) {
-        mPassphrase = passphrase;
-        mCachePassphrase = true;
-    }
-
-    public CryptoInputParcel(Date signatureTime) {
-        mHasSignature = true;
-        mSignatureTime = signatureTime == null ? new Date() : signatureTime;
-        mPassphrase = null;
-        mCachePassphrase = true;
-    }
-
-    public CryptoInputParcel(ParcelableProxy parcelableProxy) {
-        this();
-        mParcelableProxy =  parcelableProxy;
-    }
-
-    public CryptoInputParcel(Date signatureTime, boolean cachePassphrase) {
-        mHasSignature = true;
-        mSignatureTime = signatureTime == null ? new Date() : signatureTime;
-        mPassphrase = null;
-        mCachePassphrase = cachePassphrase;
-    }
-
-    public CryptoInputParcel(boolean cachePassphrase) {
-        mCachePassphrase = cachePassphrase;
-    }
-
-    protected CryptoInputParcel(Parcel source) {
-        mHasSignature = source.readByte() != 0;
-        if (mHasSignature) {
-            mSignatureTime = new Date(source.readLong());
+    public static CryptoInputParcel createCryptoInputParcel(Date signatureTime, Passphrase passphrase) {
+        if (signatureTime == null) {
+            signatureTime = new Date();
         }
-        mPassphrase = source.readParcelable(getClass().getClassLoader());
-        mParcelableProxy = source.readParcelable(getClass().getClassLoader());
-        mCachePassphrase = source.readByte() != 0;
+        return new AutoValue_CryptoInputParcel(null, new HashMap<ByteBuffer,byte[]>(), signatureTime, passphrase, true);
+    }
 
-        {
-            int count = source.readInt();
-            mCryptoData = new HashMap<>(count);
-            for (int i = 0; i < count; i++) {
-                byte[] key = source.createByteArray();
-                byte[] value = source.createByteArray();
-                mCryptoData.put(ByteBuffer.wrap(key), value);
-            }
+    public static CryptoInputParcel createCryptoInputParcel(Passphrase passphrase) {
+        return new AutoValue_CryptoInputParcel(null, new HashMap<ByteBuffer,byte[]>(), null, passphrase, true);
+    }
+
+    public static CryptoInputParcel createCryptoInputParcel(Date signatureTime) {
+        if (signatureTime == null) {
+            signatureTime = new Date();
         }
+        return new AutoValue_CryptoInputParcel(null, new HashMap<ByteBuffer,byte[]>(), signatureTime, null, true);
+    }
 
+    public static CryptoInputParcel createCryptoInputParcel(ParcelableProxy parcelableProxy) {
+        return new AutoValue_CryptoInputParcel(parcelableProxy, new HashMap<ByteBuffer,byte[]>(), null, null, true);
+    }
+
+    public static CryptoInputParcel createCryptoInputParcel(Date signatureTime, boolean cachePassphrase) {
+        if (signatureTime == null) {
+            signatureTime = new Date();
+        }
+        return new AutoValue_CryptoInputParcel(null, new HashMap<ByteBuffer,byte[]>(), signatureTime, null, cachePassphrase);
+    }
+
+    public static CryptoInputParcel createCryptoInputParcel(boolean cachePassphrase) {
+        return new AutoValue_CryptoInputParcel(null, new HashMap<ByteBuffer,byte[]>(), null, null, cachePassphrase);
     }
 
     @Override
@@ -117,83 +80,50 @@ public class CryptoInputParcel implements Parcelable {
         return 0;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-        dest.writeByte((byte) (mHasSignature ? 1 : 0));
-        if (mHasSignature) {
-            dest.writeLong(mSignatureTime.getTime());
-        }
-        dest.writeParcelable(mPassphrase, 0);
-        dest.writeParcelable(mParcelableProxy, 0);
-        dest.writeByte((byte) (mCachePassphrase ? 1 : 0));
-
-        dest.writeInt(mCryptoData.size());
-        for (HashMap.Entry<ByteBuffer, byte[]> entry : mCryptoData.entrySet()) {
-            dest.writeByteArray(entry.getKey().array());
-            dest.writeByteArray(entry.getValue());
-        }
-    }
-
-    public void addParcelableProxy(ParcelableProxy parcelableProxy) {
-        mParcelableProxy = parcelableProxy;
-    }
-
-    public void addSignatureTime(Date signatureTime) {
-        mSignatureTime = signatureTime;
-    }
-
     public void addCryptoData(byte[] hash, byte[] signedHash) {
-        mCryptoData.put(ByteBuffer.wrap(hash), signedHash);
+        getCryptoData().put(ByteBuffer.wrap(hash), signedHash);
     }
-
     public void addCryptoData(Map<ByteBuffer, byte[]> cachedSessionKeys) {
-        mCryptoData.putAll(cachedSessionKeys);
+        getCryptoData().putAll(cachedSessionKeys);
     }
 
-    public ParcelableProxy getParcelableProxy() {
-        return mParcelableProxy;
+    public CryptoInputParcel withPassphrase(Passphrase passphrase) {
+        return new AutoValue_CryptoInputParcel(
+                getParcelableProxy(), getCryptoData(), getSignatureTime(), passphrase, isCachePassphrase());
     }
 
-    public Map<ByteBuffer, byte[]> getCryptoData() {
-        return mCryptoData;
+    public CryptoInputParcel withoutPassphrase() {
+        return new AutoValue_CryptoInputParcel(
+                getParcelableProxy(), getCryptoData(), getSignatureTime(), null, isCachePassphrase());
     }
 
-    public Date getSignatureTime() {
-        return mSignatureTime;
+    public CryptoInputParcel withSignatureTime(Date signatureTime) {
+        return new AutoValue_CryptoInputParcel(
+                getParcelableProxy(), getCryptoData(), signatureTime, getPassphrase(), isCachePassphrase());
     }
+
+    public CryptoInputParcel withParcelableProxy(ParcelableProxy parcelableProxy) {
+        return new AutoValue_CryptoInputParcel(
+                parcelableProxy, getCryptoData(), getSignatureTime(), getPassphrase(), isCachePassphrase());
+    }
+
+    // used to supply an explicit proxy to operations that require it
+    // this is not final so it can be added to an existing CryptoInputParcel
+    // (e.g) CertifyOperation with upload might require both passphrase and orbot to be enabled
+    @Nullable
+    public abstract ParcelableProxy getParcelableProxy();
+
+    // this map contains both decrypted session keys and signed hashes to be
+    // used in the crypto operation described by this parcel.
+    @ParcelAdapter(ByteMapParcelAdapter.class) public abstract HashMap<ByteBuffer, byte[]> getCryptoData();
+
+    @Nullable
+    public abstract Date getSignatureTime();
+    @Nullable
+    public abstract Passphrase getPassphrase();
+    public abstract boolean isCachePassphrase();
 
     public boolean hasPassphrase() {
-        return mPassphrase != null;
+        return getPassphrase() != null;
     }
-
-    public Passphrase getPassphrase() {
-        return mPassphrase;
-    }
-
-    public static final Creator<CryptoInputParcel> CREATOR = new Creator<CryptoInputParcel>() {
-        public CryptoInputParcel createFromParcel(final Parcel source) {
-            return new CryptoInputParcel(source);
-        }
-
-        public CryptoInputParcel[] newArray(final int size) {
-            return new CryptoInputParcel[size];
-        }
-    };
-
-    @Override
-    public String toString() {
-        StringBuilder b = new StringBuilder();
-        b.append("CryptoInput: { ");
-        b.append(mSignatureTime).append(" ");
-        if (mPassphrase != null) {
-            b.append("passphrase");
-        }
-        if (mCryptoData != null) {
-            b.append(mCryptoData.size());
-            b.append(" hashes ");
-        }
-        b.append("}");
-        return b.toString();
-    }
-
 }
