@@ -52,6 +52,8 @@ import org.sufficientlysecure.keychain.ui.keyview.presenter.LinkedIdentitiesPres
 import org.sufficientlysecure.keychain.ui.keyview.presenter.LinkedIdentitiesPresenter.LinkedIdsFragMvpView;
 import org.sufficientlysecure.keychain.ui.keyview.view.SystemContactCardView;
 import org.sufficientlysecure.keychain.ui.keyview.presenter.SystemContactPresenter;
+import org.sufficientlysecure.keychain.ui.keyview.view.KeyserverStatusCardView;
+import org.sufficientlysecure.keychain.ui.keyview.presenter.KeyserverStatusPresenter;
 import org.sufficientlysecure.keychain.util.Preferences;
 
 
@@ -69,6 +71,7 @@ public class ViewKeyFragment extends LoaderFragment implements LoaderManager.Loa
     private static final int LOADER_ID_LINKED_IDS = 2;
     private static final int LOADER_ID_LINKED_CONTACT = 3;
     private static final int LOADER_ID_SUBKEY_STATUS = 4;
+    private static final int LOADER_ID_KEYSERVER_STATUS = 5;
 
     private UserIdsAdapter mUserIdsAdapter;
 
@@ -82,6 +85,9 @@ public class ViewKeyFragment extends LoaderFragment implements LoaderManager.Loa
 
     KeyHealthCardView mKeyHealthCard;
     KeyHealthPresenter mKeyHealthPresenter;
+
+    KeyserverStatusCardView mKeyserverStatusCard;
+    KeyserverStatusPresenter mKeyserverStatusPresenter;
 
     private long mMasterKeyId;
 
@@ -124,6 +130,7 @@ public class ViewKeyFragment extends LoaderFragment implements LoaderManager.Loa
 
         mSystemContactCard = (SystemContactCardView) view.findViewById(R.id.linked_system_contact_card);
         mKeyHealthCard = (KeyHealthCardView) view.findViewById(R.id.subkey_status_card);
+        mKeyserverStatusCard = (KeyserverStatusCardView) view.findViewById(R.id.keyserver_status_card);
 
         return root;
     }
@@ -163,6 +170,10 @@ public class ViewKeyFragment extends LoaderFragment implements LoaderManager.Loa
         mKeyHealthPresenter = new KeyHealthPresenter(
                 getContext(), mKeyHealthCard, LOADER_ID_SUBKEY_STATUS, mMasterKeyId, mIsSecret);
         mKeyHealthPresenter.startLoader(getLoaderManager());
+
+        mKeyserverStatusPresenter = new KeyserverStatusPresenter(
+                getContext(), mKeyserverStatusCard, LOADER_ID_KEYSERVER_STATUS, mMasterKeyId, mIsSecret);
+        mKeyserverStatusPresenter.startLoader(getLoaderManager());
     }
 
     @Override

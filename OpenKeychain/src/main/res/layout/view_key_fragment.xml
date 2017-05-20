@@ -22,6 +22,19 @@
         card_view:cardCornerRadius="4dp"
         />
 
+    <org.sufficientlysecure.keychain.ui.keyview.view.KeyserverStatusCardView
+        android:id="@+id/keyserver_status_card"
+        android:layout_gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:visibility="visible"
+        card_view:cardBackgroundColor="?attr/colorCardViewBackground"
+        card_view:cardElevation="2dp"
+        card_view:cardUseCompatPadding="true"
+        card_view:cardCornerRadius="4dp"
+        />
+
     <org.sufficientlysecure.keychain.ui.keyview.view.LinkedIdentitiesCardView
         android:id="@+id/card_linked_ids"
         android:layout_width="match_parent"
