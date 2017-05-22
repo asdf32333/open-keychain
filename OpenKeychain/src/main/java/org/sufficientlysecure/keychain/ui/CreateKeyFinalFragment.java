@@ -505,7 +505,7 @@ public class CreateKeyFinalFragment extends Fragment {
 
             @Override
             public UploadKeyringParcel createOperationInput() {
-                return new UploadKeyringParcel(keyserver, masterKeyId);
+                return UploadKeyringParcel.createWithKeyId(keyserver, masterKeyId);
             }
 
             @Override
